@@ -3,10 +3,10 @@
 int main()
 {
     int N;
-    float array[N];
     float min,max;
     scanf("%d",&N);
     printf("\n");
+    float array[N];
     
     for (int i=0; i<N;i++)
     {
