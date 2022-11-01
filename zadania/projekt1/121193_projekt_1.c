@@ -5,13 +5,14 @@
 
 
 /*main functions*/
-/*v*/void fileOpened(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
-/*n*/void initArr(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
+void v(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
+void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
+void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f);
 
 /*help functions*/
 void alloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len);
 void deAlloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum);
-void reAlloc();
+void swap(void * destination, void * source, size_t size);
 
 
 int main()
@@ -38,13 +39,13 @@ int main()
         switch (input)
         {
             case 'v':
-                fileOpened(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer,&datum, &file_len, &f);
+                v(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, &file_len, &f);
                 break;
             case 'o':
-
+                o(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, file_len, &f);
                 break;
             case 'n':
-                initArr(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer,&datum, &file_len, &f);
+                n(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, &file_len, &f);
                 break;
             case 'c':
 
@@ -62,8 +63,15 @@ int main()
 
                 break;
             case 'k':
-                deAlloc(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer,&datum);
-                fclose(f);
+                if (id!=NULL)
+                {
+                    deAlloc(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum);
+                }
+                if(f!=NULL)
+                {
+                    fclose(f);
+                }
+
                 return 0;
 
             default:
@@ -75,8 +83,7 @@ int main()
     return 0;
 }
 
-/*v*/
-void fileOpened(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f)
+void v(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f)
 {
 
     if(*f==NULL) //ak subor nebol otvoreny
@@ -87,7 +94,7 @@ void fileOpened(long long **id, char **mer_mod, char **mer_vel, double **hodnota
         }
         else //ak spravne zavola sameho seba aby skipol prvu podmienku a neotvaral subor ale uz printoval
         {
-            fileOpened(id, mer_mod, mer_vel, hodnota, cas_mer, datum, file_len, f);
+            v(id, mer_mod, mer_vel, hodnota, cas_mer, datum, file_len, f);
         }
         
     }
@@ -117,8 +124,7 @@ void fileOpened(long long **id, char **mer_mod, char **mer_vel, double **hodnota
     }
 }
 
-/*n*/
-void initArr(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f)
+void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f)
 {
     if(*f==NULL) //ak nebol otvoreny (tz nebolo este v)
     {
@@ -186,6 +192,133 @@ void initArr(long long **id, char **mer_mod, char **mer_vel, double **hodnota, c
     }
 }
 
+void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f)
+{
+    if(*f==NULL)
+    {
+        printf("Neotvoreny subor\n");
+        return;
+    }
+    /*spocita dlzku suboru*/
+    rewind(*f);  //presun na zaciatok suboru
+    char c;
+    c=fgetc(*f);
+    while(c!=EOF)
+    {
+        if(c=='\n')
+        {
+            (file_len)++;
+        }
+        c=fgetc(*f);
+    }
+    (file_len)++;
+    (file_len)/=7;
+    
+
+    char in_mer_mod[4]; //iba input 3+1 znakov
+    char in_mer_vel[3]; //iba input 2+1 znakov
+
+    int index_new=0; //index novych poli
+    //novo alokovane polia pre docasne pole
+    double *o_hodnota=(double*) calloc(file_len, sizeof(double));
+    char *o_cas_mer=(char*) calloc(file_len*5, sizeof(char));
+    long long *o_datum=(long long*) calloc(file_len, sizeof(long long));
+
+
+    scanf("%3s%2s", &in_mer_mod, &in_mer_vel); //nacita dve hodnoty ako input
+//toto zbehne cez subor
+    if(*id==NULL)
+    {
+        long long temp_id;
+        char temp_mer_mod[4]; //iba input 3+1 znakov
+        char temp_mer_vel[3]; //iba input 2+1 znakov
+        double temp_hodnota;
+        char temp_cas_mer[5];
+        long long temp_datum;
+        rewind(*f);
+        while (fscanf(*f, "%lld%3s%2s%lf%4s%lld", &temp_id, &temp_mer_mod, &temp_mer_vel, &temp_hodnota, &temp_cas_mer, &temp_datum)>0)
+        {
+            if(strcmp(temp_mer_mod, in_mer_mod)==0 && strcmp(temp_mer_vel, in_mer_vel)==0)
+            {
+           
+            *(o_hodnota+index_new)=temp_hodnota;
+
+            *(o_cas_mer+index_new*5)=temp_cas_mer[0];
+            *(o_cas_mer+index_new*5+1)=temp_cas_mer[1];
+            *(o_cas_mer+index_new*5+2)=temp_cas_mer[2];
+            *(o_cas_mer+index_new*5+3)=temp_cas_mer[3];
+            *(o_cas_mer+index_new*5+4)='\0';
+            
+            *(o_datum+index_new)=temp_datum;
+
+            index_new++; //index temp pola
+            }
+        }
+    }
+    else
+    {
+    //toto zbehne ak su uz alokovaner polia
+        for(int i=0; i<file_len; i++)
+        {
+            if(strcmp((*mer_mod+i*4), in_mer_mod)==0 && strcmp((*mer_vel+i*3), in_mer_vel)==0) // porovna dva a dva stringy a ak sa rovanaju tak skopiruje do temp pola
+            {
+                //skopiruje hodnoty co patria mer modulu a mer veliciny do docaneho pola
+                *(o_hodnota+index_new)=*(*hodnota+i);
+
+                *(o_cas_mer+index_new*5)=*(*cas_mer+i*5);
+                *(o_cas_mer+index_new*5+1)=*(*cas_mer+i*5+1);
+                *(o_cas_mer+index_new*5+2)=*(*cas_mer+i*5+2);
+                *(o_cas_mer+index_new*5+3)=*(*cas_mer+i*5+3);
+                *(o_cas_mer+index_new*5+4)='\0';
+
+                *(o_datum+index_new)=*(*datum+i);
+
+                index_new++; //index temp pola
+            }
+        }
+    }
+
+    for(int i = 0; i<index_new-1; i++)
+    {
+        for(int j = 0; j<index_new-i-1; j++)
+        {
+            int compare = 0;
+            if(o_datum[j]>o_datum[j+1])
+            {
+                compare = 1;
+            }
+            else if(o_datum[j]==o_datum[j+1])
+            {
+                if(atoi(o_cas_mer+j*5)>atoi(o_cas_mer+(j+1)*5)) //atoi premeni string na int
+                {
+                    compare = 1;
+                }
+            }
+            
+            if(compare)
+            {
+                swap(&o_hodnota[j], &o_hodnota[j+1], sizeof(double));
+                swap(&o_cas_mer[j*5], &o_cas_mer[(j+1)*5], 5*sizeof(char));
+                swap(&o_datum[j], &o_datum[j+1], sizeof(long long));
+            }
+        }
+    }
+    
+    for(int i=0; i<index_new; i++)
+    {
+        printf("%3s  %2s  %lld  %4s %lf\n", in_mer_mod, in_mer_vel, *(o_datum+i), (o_cas_mer+i*5), *(o_hodnota+i));
+    }
+    //dealokuje docasne polia
+
+    free(o_hodnota);
+    free(o_cas_mer);
+    free(o_datum);
+
+    o_hodnota=NULL;
+    o_cas_mer=NULL;
+    o_datum=NULL;
+}
+
 /*alokuje vsetky polia a calloc ich automaticky nastavi na 0*/
 void alloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len)
 {
@@ -213,4 +346,16 @@ void deAlloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, c
     *hodnota=NULL;
     *cas_mer=NULL;
     *datum=NULL;
+}
+
+/*vymeni dva zaznami z docasnych poli vo funkcii o*/
+void swap(void * destination, void * source, size_t size)
+{
+    void *temp=malloc(size);
+    memcpy(temp, source, size);
+    memcpy(source, destination, size);
+    memcpy(destination, temp, size);
+
+    free(temp);
+    temp=NULL;
 }
