@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> //string compare
-#include <ctype.h> //isdigit func & so on
+#include <string.h> //string compare, praca so stringami
+#include <ctype.h> //isdigit
 
 
 /*main functions*/
 void v(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
 void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
 void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f);
+void c(FILE **f);
+void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f);
 
 /*help functions*/
 void alloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len);
@@ -48,10 +50,10 @@ int main()
                 n(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, &file_len, &f);
                 break;
             case 'c':
-
+                c(&f);
                 break;
             case 's':
-
+                s(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, file_len, &f);
                 break;
             case 'h':
 
@@ -148,7 +150,7 @@ void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
     (*file_len)/=7;
 
     /*dynamicky vytvori polia*/
-    if(*id!=NULL) //ak nebolo alokovane alokuje
+    if(*id!=NULL) //ak nebolo alokovane alokuje staci overit pre ID
     {
         alloc(id, mer_mod, mer_vel, hodnota, cas_mer, datum, *file_len);
     }
@@ -199,7 +201,7 @@ void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
         printf("Neotvoreny subor\n");
         return;
     }
-    /*spocita dlzku suboru*/
+    /*spocita dlzku suboru*/ //musi znova pretoze ak nestlacil 'n' tak nepozna
     rewind(*f);  //presun na zaciatok suboru
     char c;
     c=fgetc(*f);
@@ -241,17 +243,17 @@ void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
             if(strcmp(temp_mer_mod, in_mer_mod)==0 && strcmp(temp_mer_vel, in_mer_vel)==0)
             {
            
-            *(o_hodnota+index_new)=temp_hodnota;
+                *(o_hodnota+index_new)=temp_hodnota;
 
-            *(o_cas_mer+index_new*5)=temp_cas_mer[0];
-            *(o_cas_mer+index_new*5+1)=temp_cas_mer[1];
-            *(o_cas_mer+index_new*5+2)=temp_cas_mer[2];
-            *(o_cas_mer+index_new*5+3)=temp_cas_mer[3];
-            *(o_cas_mer+index_new*5+4)='\0';
-            
-            *(o_datum+index_new)=temp_datum;
+                *(o_cas_mer+index_new*5)=temp_cas_mer[0];
+                *(o_cas_mer+index_new*5+1)=temp_cas_mer[1];
+                *(o_cas_mer+index_new*5+2)=temp_cas_mer[2];
+                *(o_cas_mer+index_new*5+3)=temp_cas_mer[3];
+                *(o_cas_mer+index_new*5+4)='\0';
+                
+                *(o_datum+index_new)=temp_datum;
 
-            index_new++; //index temp pola
+                index_new++; //index temp pola
             }
         }
     }
@@ -277,7 +279,7 @@ void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
             }
         }
     }
-
+    //sort poli od najmensieho po najvacsie
     for(int i = 0; i<index_new-1; i++)
     {
         for(int j = 0; j<index_new-i-1; j++)
@@ -303,7 +305,7 @@ void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
             }
         }
     }
-    
+    //printuje
     for(int i=0; i<index_new; i++)
     {
         printf("%3s  %2s  %lld  %4s %lf\n", in_mer_mod, in_mer_vel, *(o_datum+i), (o_cas_mer+i*5), *(o_hodnota+i));
@@ -317,6 +319,185 @@ void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
     o_hodnota=NULL;
     o_cas_mer=NULL;
     o_datum=NULL;
+}
+
+void c(FILE **f)
+{
+    if (f==NULL)
+    {
+        printf("Neotvoreny subor\n");
+        return;
+    }
+
+    rewind(*f);
+
+    int correct = 1;
+
+    int cas_hod; //na zmenu zo stringu na int
+    int cas_min; //na zmenu zo stringu na int
+   
+    int datum_mm; //na zmenu zo stringu na int
+    int datum_dd; //na zmenu zo stringu na int
+
+    long long temp1; //ID
+    char temp2[4]; //mer modul
+    char temp3[3]; //mer velic
+    double temp4; //useless - je tu aby don iba nacitalo a zahodi
+    char temp5[5]; //cas mer
+    long long temp6; //datum
+
+
+
+    while (fscanf(*f, "%lld%s%s%lf%s%lld", &temp1, &temp2, &temp3, &temp4, &temp5, &temp6)>0)
+    {
+        if(temp1%11!=0 || temp1<999999999 || temp1>10000000000)
+        {
+            printf("Nekorektne zadany vstup: ID cislo mer. osoby\n");
+            correct=0;
+        }
+
+        if(strlen(temp2)!=3 || temp2[0]>'Z' || temp2[0]<'A' || !isdigit(temp2[1]) || !isdigit(temp2[2]))
+        {
+            printf("Nekorektne zadany vstup: Mer. modul\n");
+            correct=0;
+        }
+
+        if((temp3[0]!='R' && temp3[0]!='U' && temp3[0]!='A') || (temp3[1]!='1' && temp3[1]!='2'&& temp3[1]!='4'))
+        {
+            printf("Nekorektne zadany vstup: Typ. mer. veliciny\n");
+            correct=0;
+        }
+
+        if(strlen(temp5)!=4)
+        {
+            printf("Nekorektne zadany vstup: Cas merania\n");
+            correct=0;           
+        }
+        else
+        {
+            char cas_hod_char[3]={temp5[0], temp5[1], '\0'};
+            char cas_min_char[3]={temp5[2], temp5[3], '\0'};
+            cas_hod=atoi(cas_hod_char);
+            cas_min=atoi(cas_min_char);
+            if(cas_hod>23 || cas_hod<0 || cas_min<0 || cas_min>59)
+            {
+                printf("Nekorektne zadany vstup: Cas merania\n");
+                correct=0;              
+            }
+        }
+
+        if(temp6<9999999 || temp6 >100000000)
+        {
+            datum_dd=temp6%100;
+            datum_mm=(temp6%10000)/100;
+
+            if(datum_mm>12 || datum_dd>31)
+            {
+                printf("Nekorektne zadany vstup: ID cislo mer. osoby\n");
+                correct=0;
+            }
+        }
+    }
+
+    if(correct)
+    {
+        printf("Data su korektne\n");
+    }
+}
+
+void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f)
+{
+    if(*id==NULL)
+    {
+        printf("Polia nie su vytvorene\n");
+        return;
+    }
+    
+    FILE *f_out;
+    f_out=fopen("vystup_S.txt","w");
+
+    char in_mer_mod[4]; //iba input 3+1 znakov
+    char in_mer_vel[3]; //iba input 2+1 znakov
+    scanf("%3s%2s", &in_mer_mod, &in_mer_vel); //nacita dve hodnoty ako input
+
+    int index_new=0; //index novych poli
+
+    //novo alokovane polia pre docasne pole
+    double *s_hodnota=(double*) calloc(file_len, sizeof(double));
+    char *s_cas_mer=(char*) calloc(file_len*5, sizeof(char));
+    long long *s_datum=(long long*) calloc(file_len, sizeof(long long));
+
+    for(int i=0; i<file_len; i++)
+    {
+        if(strcmp((*mer_mod+i*4), in_mer_mod)==0 && strcmp((*mer_vel+i*3), in_mer_vel)==0) // porovna dva a dva stringy a ak sa rovanaju tak skopiruje do temp pola
+        {
+            //skopiruje hodnoty co patria mer modulu a mer veliciny do docaneho pola
+            *(s_hodnota+index_new)=*(*hodnota+i);
+
+            *(s_cas_mer+index_new*5)=*(*cas_mer+i*5);
+            *(s_cas_mer+index_new*5+1)=*(*cas_mer+i*5+1);
+            *(s_cas_mer+index_new*5+2)=*(*cas_mer+i*5+2);
+            *(s_cas_mer+index_new*5+3)=*(*cas_mer+i*5+3);
+            *(s_cas_mer+index_new*5+4)='\0';
+
+            *(s_datum+index_new)=*(*datum+i);
+
+            index_new++; //index temp pola
+        }
+    }
+
+    //sort poli od najmensieho po najvacsie
+    for(int i = 0; i<index_new-1; i++)
+    {
+        for(int j = 0; j<index_new-i-1; j++)
+        {
+            int compare = 0;
+            if(s_datum[j]>s_datum[j+1])
+            {
+                compare = 1;
+            }
+            else if(s_datum[j]==s_datum[j+1])
+            {
+                if(atoi(s_cas_mer+j*5)>atoi(s_cas_mer+(j+1)*5)) //atoi premeni string na int
+                {
+                    compare = 1;
+                }
+            }
+            
+            if(compare)
+            {
+                swap(&s_hodnota[j], &s_hodnota[j+1], sizeof(double));
+                swap(&s_cas_mer[j*5], &s_cas_mer[(j+1)*5], 5*sizeof(char));
+                swap(&s_datum[j], &s_datum[j+1], sizeof(long long));
+            }
+        }
+    }
+
+    //printuje
+    for(int i=0; i<index_new; i++)
+    {
+        fprintf(f_out, "%lld%4s\t%.7lf\n", *(s_datum+i), (s_cas_mer+i*5), *(s_hodnota+i));
+    }
+
+    if(index_new!=0)
+    {
+        printf("Pre dany vstup je vytvoreny txt subor\n");
+    }
+    else
+    {
+        printf("Pre dany vstup neexistuju zaznamy\n");
+    }
+
+    fclose(f_out);
+    //dealok temp poli
+    free(s_hodnota);
+    free(s_cas_mer);
+    free(s_datum);
+
+    s_hodnota=NULL;
+    s_cas_mer=NULL;
+    s_datum=NULL;
+
 }
 
 /*alokuje vsetky polia a calloc ich automaticky nastavi na 0*/
