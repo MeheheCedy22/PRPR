@@ -6,16 +6,18 @@
 
 /*main functions*/
 void v(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
-void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
 void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f);
+void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
 void c(FILE **f);
 void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f);
+void h(char **mer_vel, double **hodnota, int file_len);
+void z(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
 
 /*help functions*/
 void alloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len);
 void deAlloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum);
+void reAlloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len);
 void swap(void * destination, void * source, size_t size);
-
 
 int main()
 {
@@ -26,16 +28,16 @@ int main()
     FILE *f=NULL;
 
     long long *id=NULL;
-    char *mer_mod=NULL; //3 znaky
-    char *mer_vel=NULL; //2 znaky
+    char *mer_mod=NULL; //pocet zaznamov suboru*3 znaky
+    char *mer_vel=NULL; //pocet zaznamov suboru*2 znaky
     double *hodnota=NULL;
-    char *cas_mer=NULL; //4 znaky
+    char *cas_mer=NULL; //pocet zaznamov suboru*4 znaky
     long long *datum=NULL;
 
     
     while(1)
     {
-        printf("\n");
+        printf("\n"); //nech pekne oddeluje aby sa dalo zorientovat
         scanf("%c", &input);
 
         switch (input)
@@ -56,13 +58,13 @@ int main()
                 s(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, file_len, &f);
                 break;
             case 'h':
-
+                h(&mer_vel, &hodnota, file_len);
                 break;
             case 'r':
 
                 break;
             case 'z':
-
+                z(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, &file_len, &f);
                 break;
             case 'k':
                 if (id!=NULL)
@@ -84,6 +86,9 @@ int main()
 
     return 0;
 }
+
+
+/*main functions*/
 
 void v(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f)
 {
@@ -500,6 +505,83 @@ void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
 
 }
 
+void h(char **mer_vel, double **hodnota, int file_len)
+{
+    if(*mer_vel==NULL)
+    {
+        printf("Polia nie su vytvorene\n");
+        return;
+    }
+
+    char in_mer_vel[3]; //iba input 2+1 znakov
+    scanf("%2s", &in_mer_vel);
+
+    for(int i=0; i<file_len; i++)
+    {
+        if(strcmp(*mer_vel, in_mer_vel)!=NULL)
+        {
+
+        }
+    }
+
+}
+
+void z(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f)
+{
+    if(*id==NULL)
+    {
+        printf("Polia nie su vytvorene\n");
+        return;
+    }
+
+    int count_deleted=0;
+
+    long long in_id;
+    scanf("%lld", &in_id);
+
+    //setuje nasledujuci na predchadzajuci a prepisuje ich (shiftuje pole)
+    for(int i=0; i<*file_len; i++)
+    {
+        if(*(*id+i-count_deleted)==in_id)
+        {
+            for(int j=i-count_deleted; j<*file_len; j++)
+            {
+
+                *(*id+j)=*(*id+j+1);
+                
+                *(*mer_mod+j*4)=*(*mer_mod+(j+1)*4);
+                *(*mer_mod+j*4+1)=*(*mer_mod+(j+1)*4+1);
+                *(*mer_mod+j*4+2)=*(*mer_mod+(j+1)*4+2);
+                *(*mer_mod+j*4+3)=*(*mer_mod+(j+1)*4+3);
+
+                *(*mer_vel+j*3)=*(*mer_vel+(j+1)*3);
+                *(*mer_vel+j*3+1)=*(*mer_vel+(j+1)*3+1);
+                *(*mer_vel+j*3+2)=*(*mer_vel+(j+1)*3+2);
+
+                *(*hodnota+j)=*(*hodnota+j+1);
+
+                *(*cas_mer+j*5)=*(*cas_mer+(j+1)*5);
+                *(*cas_mer+j*5+1)=*(*cas_mer+(j+1)*5+1);
+                *(*cas_mer+j*5+2)=*(*cas_mer+(j+1)*5+2);
+                *(*cas_mer+j*5+3)=*(*cas_mer+(j+1)*5+3);
+                *(*cas_mer+j*5+4)=*(*cas_mer+(j+1)*5+4);
+
+                *(*datum+j)=*(*datum+j+1);
+            }
+
+            count_deleted++;
+        }
+    }
+
+    reAlloc(id, mer_mod, mer_vel, hodnota, cas_mer, datum, *file_len-count_deleted);
+
+    *file_len-=count_deleted;
+
+    printf("Vymazalo sa: %d zaznamov !", count_deleted);
+}
+
+/*help functions*/
+
 /*alokuje vsetky polia a calloc ich automaticky nastavi na 0*/
 void alloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len)
 {
@@ -527,6 +609,18 @@ void deAlloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, c
     *hodnota=NULL;
     *cas_mer=NULL;
     *datum=NULL;
+}
+
+/*realokuje velkosti poli vo funkcii z po zmazani zaznamov*/
+void reAlloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len)
+{
+    //!=NULL je tam kvoli tomu ze mi kompiler daval warningy ze nepouzivam return hodnotu reallocu, tak som dal aby akoze overil ze to spravne reallocoval
+    realloc(*id, file_len*sizeof(long long))!=NULL;
+    realloc(*mer_mod, file_len*4*sizeof(char))!=NULL;
+    realloc(*mer_vel, file_len*3*sizeof(char))!=NULL;
+    realloc(*hodnota, file_len*sizeof(double))!=NULL;
+    realloc(*cas_mer, file_len*5*sizeof(char))!=NULL;
+    realloc(*datum, file_len*sizeof(long long))!=NULL;
 }
 
 /*vymeni dva zaznami z docasnych poli vo funkcii o*/
