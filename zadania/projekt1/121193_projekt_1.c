@@ -2,14 +2,20 @@
 /*AIS ID: 121193*/
 
 /*
-    Vsetko bolo otestovane a funguje podla zadania.
+    Vsetko bolo otestovane a funguje podla zadania. bez errorov a warningov
+
+    Pouzite IDE: VS Code v1.73.0
+
     Pouzity kompilator:
+
     gcc.exe (GCC) 11.2.0
     Copyright (C) 2021 Free Software Foundation, Inc.
     This is free software; see the source for copying conditions.  There is NO
     warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 */
+
+//#define _CRT-SECURE_NO_WARNINGS
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -340,7 +346,7 @@ void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
 
 void c(FILE **f)
 {
-    if (f==NULL)
+    if (*f==NULL)
     {
         printf("Neotvoreny subor\n");
         return;
@@ -601,9 +607,10 @@ void r(char **cas_mer, int file_len)
         }
     }
 
+    //kopiruje + filtruje do druheho temp pola
     index_new++;
     char *temp_cas_mer2=(char*) calloc(file_len, 5*sizeof(char));
-    strcpy(temp_cas_mer2, temp_cas_mer);
+    strcpy(temp_cas_mer2, temp_cas_mer); //skopiruje prvy string
 
     for(int i=1; i<file_len; i++)
     {
@@ -628,7 +635,7 @@ void r(char **cas_mer, int file_len)
         }
         else
         {
-            printf("\n%2d:%s", hour, minutsStr);
+            printf("\n%s:%s", hourStr, minutsStr);
         }
     }
 
