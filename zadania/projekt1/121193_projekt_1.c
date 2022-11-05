@@ -1,3 +1,16 @@
+/*MAREK CEDERLE, PROJEKT c.1 PRPR - Praca s dynamickymi poliami*/
+/*AIS ID: 121193*/
+
+/*
+    Vsetko bolo otestovane a funguje podla zadania.
+    Pouzity kompilator:
+    gcc.exe (GCC) 11.2.0
+    Copyright (C) 2021 Free Software Foundation, Inc.
+    This is free software; see the source for copying conditions.  There is NO
+    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> //string compare, praca so stringami
@@ -11,6 +24,7 @@ void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
 void c(FILE **f);
 void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f);
 void h(char **mer_vel, double **hodnota, int file_len);
+void r(char **cas_mer, int file_len);
 void z(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
 
 /*help functions*/
@@ -61,7 +75,7 @@ int main()
                 h(&mer_vel, &hodnota, file_len);
                 break;
             case 'r':
-
+                r(&cas_mer, file_len);
                 break;
             case 'z':
                 z(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, &file_len, &f);
@@ -81,12 +95,10 @@ int main()
             default:
                 ;
         }
-
     }
 
     return 0;
 }
-
 
 /*main functions*/
 
@@ -233,7 +245,7 @@ void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
 
 
     scanf("%3s%2s", &in_mer_mod, &in_mer_vel); //nacita dve hodnoty ako input
-//toto zbehne cez subor
+    //toto zbehne cez subor
     if(*id==NULL)
     {
         long long temp_id;
@@ -513,17 +525,118 @@ void h(char **mer_vel, double **hodnota, int file_len)
         return;
     }
 
-    char in_mer_vel[3]; //iba input 2+1 znakov
-    scanf("%2s", &in_mer_vel);
+    double temp_hodnota=0;
+    int max_range_low;
+    int max_range_high;
 
+    char in_mer_vel[3]; //iba input 2+1 znakov
+    scanf("%s", &in_mer_vel);
+    in_mer_vel[2]='\0';
+
+    /*iba zisti maximalnu hodnotu rangu*/
     for(int i=0; i<file_len; i++)
     {
-        if(strcmp(*mer_vel, in_mer_vel)!=NULL)
+        if(strcmp((*mer_vel+i*3), in_mer_vel)==0) //su rovnake
         {
-
+            if(*(*hodnota+i)>temp_hodnota)
+            {
+                temp_hodnota=*(*hodnota+i);
+            }
         }
     }
 
+    max_range_high=((int)temp_hodnota/5+1)*(5); //priradi maximalnu hodnotu rangu
+
+    int *range_arr=(int*) calloc(max_range_high/5, sizeof(int));
+
+    for(int i=0; i<file_len; i++)
+    {
+        if(strcmp((*mer_vel+i*3), in_mer_vel)==0) // su rovnake
+        {
+            *(range_arr+((int)(*(*hodnota+i))/5))+=1;
+        }
+    }
+
+
+    printf("\t%2s\t\tpocetnost\n", in_mer_vel);
+
+    for(int i=0; i<max_range_high/5; i++)
+    {
+        if(*(range_arr+i)!=0)
+        {
+            printf("(%3d.0-%4d.0>\t\t   %d\n", i*5, (i+1)*5, *(range_arr+i));
+        }
+    }
+
+    free(range_arr);
+    range_arr=NULL;
+}
+
+void r(char **cas_mer, int file_len)
+{
+    if(*cas_mer==NULL)
+    {
+        printf("Polia nie su vytvorene\n");
+        return;
+    }
+
+    char *temp_cas_mer=(char*) calloc(file_len, 5*sizeof(char));
+    int index_new=0;
+
+    //skopiruje hodnoty do docaneho pola
+    for(int i=0; i<file_len; i++)
+    {           
+        strcpy((temp_cas_mer+i*5), (*cas_mer+i*5));
+    }
+
+    //sort poli od najmensieho po najvacsie
+    for(int i=0; i<file_len-1; i++)
+    {
+        for(int j=0; j<file_len-i-1; j++)
+        {
+            if(atoi(temp_cas_mer+j*5)>atoi(temp_cas_mer+(j+1)*5)) //atoi premeni string na int
+            {
+                swap(&temp_cas_mer[j*5], &temp_cas_mer[(j+1)*5], 5*sizeof(char));
+            }
+        }
+    }
+
+    index_new++;
+    char *temp_cas_mer2=(char*) calloc(file_len, 5*sizeof(char));
+    strcpy(temp_cas_mer2, temp_cas_mer);
+
+    for(int i=1; i<file_len; i++)
+    {
+        if(strcmp(temp_cas_mer+(i-1)*5, temp_cas_mer+i*5)!=0)
+        {
+            strcpy(temp_cas_mer2+index_new*5, temp_cas_mer+i*5);
+            index_new++;
+        }
+    }
+
+    //Print hours and all of their minutes in the same line
+    for(int i=0; i<index_new; i++)
+    {
+        char hourStr[3]={temp_cas_mer2[i*5], temp_cas_mer2[i*5+1], '\0'};
+        int hour=atoi(hourStr);
+        char minutsStr[3]={temp_cas_mer2[i*5+2], temp_cas_mer2[i*5+3], '\0'};
+
+        //If the hour is the same as the previous one, print the minuts
+        if(i!=0 && temp_cas_mer2[i*5]==temp_cas_mer2[(i-1)*5] && temp_cas_mer2[i*5+1]==temp_cas_mer2[(i-1)*5+1])
+        {
+            printf(", %s", minutsStr);
+        }
+        else
+        {
+            printf("\n%2d:%s", hour, minutsStr);
+        }
+    }
+
+    free(temp_cas_mer);
+    free(temp_cas_mer2);
+
+    temp_cas_mer=NULL;
+    temp_cas_mer2=NULL;
 }
 
 void z(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f)
