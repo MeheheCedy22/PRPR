@@ -1,8 +1,10 @@
-/*MAREK CEDERLE, PROJEKT c.1 PRPR - Praca s dynamickymi poliami*/
-/*AIS ID: 121193*/
+/*
+    MAREK CEDERLE, PROJEKT c.1 PRPR - Praca s dynamickymi poliami
+    AIS ID: 121193
+*/
 
 /*
-    Vsetko bolo otestovane a funguje podla zadania. bez errorov a warningov
+    Vsetko bolo otestovane a funguje podla zadania, bez errorov a warningov
 
     Pouzite IDE: VS Code v1.73.0
 
@@ -15,7 +17,7 @@
 
 */
 
-//#define _CRT-SECURE_NO_WARNINGS
+//#define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,13 +27,13 @@
 
 /*main functions*/
 void v(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
-void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f);
+void o(char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f);
 void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
 void c(FILE **f);
-void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f);
+void s(char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len);
 void h(char **mer_vel, double **hodnota, int file_len);
 void r(char **cas_mer, int file_len);
-void z(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f);
+void z(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len);
 
 /*help functions*/
 void alloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len);
@@ -48,10 +50,10 @@ int main()
     FILE *f=NULL;
 
     long long *id=NULL;
-    char *mer_mod=NULL; //pocet zaznamov suboru*3 znaky
-    char *mer_vel=NULL; //pocet zaznamov suboru*2 znaky
+    char *mer_mod=NULL; //pocet zaznamov suboru*3 znaky (potom alokujem o jeden viac cize *4 kvoli \0)
+    char *mer_vel=NULL; //pocet zaznamov suboru*2 znaky (potom alokujem o jeden viac cize *3 kvoli \0)
     double *hodnota=NULL;
-    char *cas_mer=NULL; //pocet zaznamov suboru*4 znaky
+    char *cas_mer=NULL; //pocet zaznamov suboru*4 znaky (potom alokujem o jeden viac cize *5 kvoli \0)
     long long *datum=NULL;
 
     
@@ -66,7 +68,7 @@ int main()
                 v(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, &file_len, &f);
                 break;
             case 'o':
-                o(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, file_len, &f);
+                o(&mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, file_len, &f);
                 break;
             case 'n':
                 n(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, &file_len, &f);
@@ -75,7 +77,7 @@ int main()
                 c(&f);
                 break;
             case 's':
-                s(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, file_len, &f);
+                s(&mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, file_len);
                 break;
             case 'h':
                 h(&mer_vel, &hodnota, file_len);
@@ -84,7 +86,7 @@ int main()
                 r(&cas_mer, file_len);
                 break;
             case 'z':
-                z(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, &file_len, &f);
+                z(&id, &mer_mod, &mer_vel, &hodnota, &cas_mer, &datum, &file_len);
                 break;
             case 'k':
                 if (id!=NULL)
@@ -97,7 +99,6 @@ int main()
                 }
 
                 return 0;
-
             default:
                 ;
         }
@@ -110,22 +111,20 @@ int main()
 
 void v(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f)
 {
-
     if(*f==NULL) //ak subor nebol otvoreny
     {
         if((*f=fopen("dataloger.txt","r")) == NULL) //otvori subor a zaroven zisti ci sa otvoril spravne
         {
             printf("Neotvoreny subor\n"); //ak nespravne
         }
-        else //ak spravne zavola sameho seba aby skipol prvu podmienku a neotvaral subor ale uz printoval
+        else //ak spravne zavola sameho seba aby skipol prvu podmienku a neotvaral subor ale uz printoval lebo uz subor bude otvoreny
         {
             v(id, mer_mod, mer_vel, hodnota, cas_mer, datum, file_len, f);
         }
-        
     }
     else
     {
-        if(*id!=NULL) //bolo n - tak vypis z poli
+        if(*id!=NULL) //bolo n (alokovane polia) - tak vypis z poli
         {
             for(int i=0; i<*file_len; i++)
             {
@@ -147,6 +146,136 @@ void v(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
             }
         }
     }
+}
+
+void o(char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f)
+{
+    if(*f==NULL)
+    {
+        printf("Neotvoreny subor\n");
+        return;
+    }
+
+    /*spocita dlzku suboru*/ //musi znova pretoze ak nestlacil 'n' tak nepozna
+    rewind(*f);  //presun na zaciatok suboru
+    char c;
+    c=fgetc(*f);
+    while(c!=EOF)
+    {
+        if(c=='\n')
+        {
+            (file_len)++;
+        }
+        c=fgetc(*f);
+    }
+    (file_len)++;
+    (file_len)/=7;
+    
+
+    char in_mer_mod[4]; //iba input 3+1 znakov
+    char in_mer_vel[3]; //iba input 2+1 znakov
+
+    int index_new=0; //index novych poli
+
+    //novo alokovane polia pre docasne pole
+    double *o_hodnota=(double*) calloc(file_len, sizeof(double));
+    char *o_cas_mer=(char*) calloc(file_len*5, sizeof(char));
+    long long *o_datum=(long long*) calloc(file_len, sizeof(long long));
+
+
+    scanf("%3s%2s", &in_mer_mod, &in_mer_vel); //nacita dve hodnoty ako input
+    
+    if(*mer_mod==NULL) //toto zbehne cez subor
+    {
+        long long temp_id;
+        char temp_mer_mod[4]; //iba input 3+1 znakov
+        char temp_mer_vel[3]; //iba input 2+1 znakov
+        double temp_hodnota;
+        char temp_cas_mer[5];
+        long long temp_datum;
+        rewind(*f);
+        while (fscanf(*f, "%lld%3s%2s%lf%4s%lld", &temp_id, &temp_mer_mod, &temp_mer_vel, &temp_hodnota, &temp_cas_mer, &temp_datum)>0)
+        {
+            if(strcmp(temp_mer_mod, in_mer_mod)==0 && strcmp(temp_mer_vel, in_mer_vel)==0)
+            {
+                *(o_hodnota+index_new)=temp_hodnota;
+
+                *(o_cas_mer+index_new*5)=temp_cas_mer[0];
+                *(o_cas_mer+index_new*5+1)=temp_cas_mer[1];
+                *(o_cas_mer+index_new*5+2)=temp_cas_mer[2];
+                *(o_cas_mer+index_new*5+3)=temp_cas_mer[3];
+                *(o_cas_mer+index_new*5+4)='\0';
+
+                *(o_datum+index_new)=temp_datum;
+
+                index_new++; //index temp pola
+            }
+        }
+    }
+    else //toto zbehne ak su uz alokovaner polia
+    {
+        for(int i=0; i<file_len; i++)
+        {
+            if(strcmp((*mer_mod+i*4), in_mer_mod)==0 && strcmp((*mer_vel+i*3), in_mer_vel)==0) // porovna dva a dva stringy a ak sa rovanaju tak skopiruje do temp pola
+            {
+                //skopiruje hodnoty do docaneho pola
+                *(o_hodnota+index_new)=*(*hodnota+i);
+                
+                *(o_cas_mer+index_new*5)=*(*cas_mer+i*5);
+                *(o_cas_mer+index_new*5+1)=*(*cas_mer+i*5+1);
+                *(o_cas_mer+index_new*5+2)=*(*cas_mer+i*5+2);
+                *(o_cas_mer+index_new*5+3)=*(*cas_mer+i*5+3);
+                *(o_cas_mer+index_new*5+4)='\0';
+
+                *(o_datum+index_new)=*(*datum+i);
+
+                index_new++; //index temp pola
+            }
+        }
+    }
+
+    //sort poli od najmensieho po najvacsie
+    for(int i=0; i<index_new-1; i++)
+    {
+        for(int j=0; j<index_new-i-1; j++)
+        {
+            int compare=0;
+            
+            if(o_datum[j]>o_datum[j+1])
+            {
+                compare=1;
+            }
+            else if(o_datum[j]==o_datum[j+1])
+            {
+                if(atoi(o_cas_mer+j*5)>atoi(o_cas_mer+(j+1)*5)) //atoi premeni string na int
+                {
+                    compare=1;
+                }
+            }
+            
+            if(compare)
+            {
+                swap(&o_hodnota[j], &o_hodnota[j+1], sizeof(double));
+                swap(&o_cas_mer[j*5], &o_cas_mer[(j+1)*5], 5*sizeof(char));
+                swap(&o_datum[j], &o_datum[j+1], sizeof(long long));
+            }
+        }
+    }
+
+    //printovanie
+    for(int i=0; i<index_new; i++)
+    {
+        printf("%3s  %2s  %lld  %4s %lf\n", in_mer_mod, in_mer_vel, *(o_datum+i), (o_cas_mer+i*5), *(o_hodnota+i));
+    }
+
+    //dealokuje docasne polia
+    free(o_hodnota);
+    free(o_cas_mer);
+    free(o_datum);
+
+    o_hodnota=NULL;
+    o_cas_mer=NULL;
+    o_datum=NULL;
 }
 
 void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f)
@@ -173,7 +302,7 @@ void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
     (*file_len)/=7;
 
     /*dynamicky vytvori polia*/
-    if(*id!=NULL) //ak nebolo alokovane alokuje staci overit pre ID
+    if(*id==NULL) //ak nebolo alokovane alokuje staci overit pre ID
     {
         alloc(id, mer_mod, mer_vel, hodnota, cas_mer, datum, *file_len);
     }
@@ -182,7 +311,8 @@ void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
         deAlloc(id, mer_mod, mer_vel, hodnota, cas_mer, datum);
         alloc(id, mer_mod, mer_vel, hodnota, cas_mer, datum, *file_len);
     }
-    /*nacita a zapise hodnoty do arrayov*/
+
+    /*nacita a zapise hodnoty do dynamickych poli*/
     rewind(*f);
     long long temp1;
     char temp2[4]; //3+1 znak kvoli \0
@@ -200,7 +330,7 @@ void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
         *(*mer_mod+i*4+1)=temp2[1];
         *(*mer_mod+i*4+2)=temp2[2];
         *(*mer_mod+i*4+3)='\0';
-
+        
         *(*mer_vel+i*3)=temp3[0];
         *(*mer_vel+i*3+1)=temp3[1];
         *(*mer_vel+i*3+2)='\0';
@@ -215,133 +345,6 @@ void n(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
 
         *(*datum+i)=temp6;
     }
-}
-
-void o(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f)
-{
-    if(*f==NULL)
-    {
-        printf("Neotvoreny subor\n");
-        return;
-    }
-    /*spocita dlzku suboru*/ //musi znova pretoze ak nestlacil 'n' tak nepozna
-    rewind(*f);  //presun na zaciatok suboru
-    char c;
-    c=fgetc(*f);
-    while(c!=EOF)
-    {
-        if(c=='\n')
-        {
-            (file_len)++;
-        }
-        c=fgetc(*f);
-    }
-    (file_len)++;
-    (file_len)/=7;
-    
-
-    char in_mer_mod[4]; //iba input 3+1 znakov
-    char in_mer_vel[3]; //iba input 2+1 znakov
-
-    int index_new=0; //index novych poli
-    //novo alokovane polia pre docasne pole
-    double *o_hodnota=(double*) calloc(file_len, sizeof(double));
-    char *o_cas_mer=(char*) calloc(file_len*5, sizeof(char));
-    long long *o_datum=(long long*) calloc(file_len, sizeof(long long));
-
-
-    scanf("%3s%2s", &in_mer_mod, &in_mer_vel); //nacita dve hodnoty ako input
-    //toto zbehne cez subor
-    if(*id==NULL)
-    {
-        long long temp_id;
-        char temp_mer_mod[4]; //iba input 3+1 znakov
-        char temp_mer_vel[3]; //iba input 2+1 znakov
-        double temp_hodnota;
-        char temp_cas_mer[5];
-        long long temp_datum;
-        rewind(*f);
-        while (fscanf(*f, "%lld%3s%2s%lf%4s%lld", &temp_id, &temp_mer_mod, &temp_mer_vel, &temp_hodnota, &temp_cas_mer, &temp_datum)>0)
-        {
-            if(strcmp(temp_mer_mod, in_mer_mod)==0 && strcmp(temp_mer_vel, in_mer_vel)==0)
-            {
-           
-                *(o_hodnota+index_new)=temp_hodnota;
-
-                *(o_cas_mer+index_new*5)=temp_cas_mer[0];
-                *(o_cas_mer+index_new*5+1)=temp_cas_mer[1];
-                *(o_cas_mer+index_new*5+2)=temp_cas_mer[2];
-                *(o_cas_mer+index_new*5+3)=temp_cas_mer[3];
-                *(o_cas_mer+index_new*5+4)='\0';
-                
-                *(o_datum+index_new)=temp_datum;
-
-                index_new++; //index temp pola
-            }
-        }
-    }
-    else
-    {
-    //toto zbehne ak su uz alokovaner polia
-        for(int i=0; i<file_len; i++)
-        {
-            if(strcmp((*mer_mod+i*4), in_mer_mod)==0 && strcmp((*mer_vel+i*3), in_mer_vel)==0) // porovna dva a dva stringy a ak sa rovanaju tak skopiruje do temp pola
-            {
-                //skopiruje hodnoty co patria mer modulu a mer veliciny do docaneho pola
-                *(o_hodnota+index_new)=*(*hodnota+i);
-
-                *(o_cas_mer+index_new*5)=*(*cas_mer+i*5);
-                *(o_cas_mer+index_new*5+1)=*(*cas_mer+i*5+1);
-                *(o_cas_mer+index_new*5+2)=*(*cas_mer+i*5+2);
-                *(o_cas_mer+index_new*5+3)=*(*cas_mer+i*5+3);
-                *(o_cas_mer+index_new*5+4)='\0';
-
-                *(o_datum+index_new)=*(*datum+i);
-
-                index_new++; //index temp pola
-            }
-        }
-    }
-    //sort poli od najmensieho po najvacsie
-    for(int i = 0; i<index_new-1; i++)
-    {
-        for(int j = 0; j<index_new-i-1; j++)
-        {
-            int compare = 0;
-            if(o_datum[j]>o_datum[j+1])
-            {
-                compare = 1;
-            }
-            else if(o_datum[j]==o_datum[j+1])
-            {
-                if(atoi(o_cas_mer+j*5)>atoi(o_cas_mer+(j+1)*5)) //atoi premeni string na int
-                {
-                    compare = 1;
-                }
-            }
-            
-            if(compare)
-            {
-                swap(&o_hodnota[j], &o_hodnota[j+1], sizeof(double));
-                swap(&o_cas_mer[j*5], &o_cas_mer[(j+1)*5], 5*sizeof(char));
-                swap(&o_datum[j], &o_datum[j+1], sizeof(long long));
-            }
-        }
-    }
-    //printuje
-    for(int i=0; i<index_new; i++)
-    {
-        printf("%3s  %2s  %lld  %4s %lf\n", in_mer_mod, in_mer_vel, *(o_datum+i), (o_cas_mer+i*5), *(o_hodnota+i));
-    }
-    //dealokuje docasne polia
-
-    free(o_hodnota);
-    free(o_cas_mer);
-    free(o_datum);
-
-    o_hodnota=NULL;
-    o_cas_mer=NULL;
-    o_datum=NULL;
 }
 
 void c(FILE **f)
@@ -365,7 +368,7 @@ void c(FILE **f)
     long long temp1; //ID
     char temp2[4]; //mer modul
     char temp3[3]; //mer velic
-    double temp4; //useless - je tu aby don iba nacitalo a zahodi
+    double temp4; //useless - je tu aby don iba nacitalo a zahodi pretoze hodnotu neoverujeme
     char temp5[5]; //cas mer
     long long temp6; //datum
 
@@ -385,7 +388,7 @@ void c(FILE **f)
             correct=0;
         }
 
-        if((temp3[0]!='R' && temp3[0]!='U' && temp3[0]!='A') || (temp3[1]!='1' && temp3[1]!='2'&& temp3[1]!='4'))
+        if((temp3[0]!='R' && temp3[0]!='U' && temp3[0]!='A') || (temp3[1]!='1' && temp3[1]!='2' && temp3[1]!='4'))
         {
             printf("Nekorektne zadany vstup: Typ. mer. veliciny\n");
             correct=0;
@@ -428,9 +431,9 @@ void c(FILE **f)
     }
 }
 
-void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len, FILE **f)
+void s(char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len)
 {
-    if(*id==NULL)
+    if(*mer_mod==NULL)
     {
         printf("Polia nie su vytvorene\n");
         return;
@@ -456,7 +459,7 @@ void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
         {
             //skopiruje hodnoty co patria mer modulu a mer veliciny do docaneho pola
             *(s_hodnota+index_new)=*(*hodnota+i);
-
+            
             *(s_cas_mer+index_new*5)=*(*cas_mer+i*5);
             *(s_cas_mer+index_new*5+1)=*(*cas_mer+i*5+1);
             *(s_cas_mer+index_new*5+2)=*(*cas_mer+i*5+2);
@@ -470,20 +473,20 @@ void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
     }
 
     //sort poli od najmensieho po najvacsie
-    for(int i = 0; i<index_new-1; i++)
+    for(int i=0; i<index_new-1; i++)
     {
-        for(int j = 0; j<index_new-i-1; j++)
+        for(int j=0; j<index_new-i-1; j++)
         {
-            int compare = 0;
+            int compare=0;
             if(s_datum[j]>s_datum[j+1])
             {
-                compare = 1;
+                compare=1;
             }
             else if(s_datum[j]==s_datum[j+1])
             {
                 if(atoi(s_cas_mer+j*5)>atoi(s_cas_mer+(j+1)*5)) //atoi premeni string na int
                 {
-                    compare = 1;
+                    compare=1;
                 }
             }
             
@@ -496,7 +499,7 @@ void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
         }
     }
 
-    //printuje
+    //printovanie
     for(int i=0; i<index_new; i++)
     {
         fprintf(f_out, "%lld%4s\t%.7lf\n", *(s_datum+i), (s_cas_mer+i*5), *(s_hodnota+i));
@@ -511,8 +514,10 @@ void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
         printf("Pre dany vstup neexistuju zaznamy\n");
     }
 
+    //zatvori subor
     fclose(f_out);
-    //dealok temp poli
+
+    //dealocc temp poli
     free(s_hodnota);
     free(s_cas_mer);
     free(s_datum);
@@ -520,7 +525,6 @@ void s(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **
     s_hodnota=NULL;
     s_cas_mer=NULL;
     s_datum=NULL;
-
 }
 
 void h(char **mer_vel, double **hodnota, int file_len)
@@ -532,14 +536,14 @@ void h(char **mer_vel, double **hodnota, int file_len)
     }
 
     double temp_hodnota=0;
-    int max_range_low;
+
     int max_range_high;
 
     char in_mer_vel[3]; //iba input 2+1 znakov
     scanf("%s", &in_mer_vel);
     in_mer_vel[2]='\0';
 
-    /*iba zisti maximalnu hodnotu rangu*/
+    /*iba zisti maximalnu hodnotu a potom z toho urobi max range*/
     for(int i=0; i<file_len; i++)
     {
         if(strcmp((*mer_vel+i*3), in_mer_vel)==0) //su rovnake
@@ -551,26 +555,28 @@ void h(char **mer_vel, double **hodnota, int file_len)
         }
     }
 
-    max_range_high=((int)temp_hodnota/5+1)*(5); //priradi maximalnu hodnotu rangu
+    max_range_high=((int)temp_hodnota/5+1)*(5); //priradi maximalnu hodnotu rangu (urobi z toho max vlue of range)
 
+
+    //pole, ktore reprezentuje kolko existuje rangov od 0 po max a naplni nulami
     int *range_arr=(int*) calloc(max_range_high/5, sizeof(int));
 
     for(int i=0; i<file_len; i++)
     {
-        if(strcmp((*mer_vel+i*3), in_mer_vel)==0) // su rovnake
+        if(strcmp((*mer_vel+i*3), in_mer_vel)==0) //ak su rovnake
         {
-            *(range_arr+((int)(*(*hodnota+i))/5))+=1;
+            *(range_arr+((int)(*(*hodnota+i))/5))+=1; //pripocita vdzy 1 do indexu rangu kde sa nachadza dana hodnota pre zhodu s mer velicinou
         }
     }
 
-
+    //printovanie ak je na indexe rangu ulozene nejake cislo tz. kolko krat sa ta hodnota nachadza v tom rangi pre danu zhodu
     printf("\t%2s\t\tpocetnost\n", in_mer_vel);
 
     for(int i=0; i<max_range_high/5; i++)
     {
         if(*(range_arr+i)!=0)
         {
-            printf("(%3d.0-%4d.0>\t\t   %d\n", i*5, (i+1)*5, *(range_arr+i));
+            printf("(%3d.0- %3d.0>\t\t   %d\n", i*5, (i+1)*5, *(range_arr+i)); //tento print ze 3d je tak kvoli tomu ako to bolo v zadani pre ukazkovy vypis!!
         }
     }
 
@@ -586,7 +592,7 @@ void r(char **cas_mer, int file_len)
         return;
     }
 
-    char *temp_cas_mer=(char*) calloc(file_len, 5*sizeof(char));
+    char *temp_cas_mer=(char*) calloc(file_len*5, sizeof(char));
     int index_new=0;
 
     //skopiruje hodnoty do docaneho pola
@@ -609,7 +615,7 @@ void r(char **cas_mer, int file_len)
 
     //kopiruje + filtruje do druheho temp pola
     index_new++;
-    char *temp_cas_mer2=(char*) calloc(file_len, 5*sizeof(char));
+    char *temp_cas_mer2=(char*) calloc(file_len*5, sizeof(char));
     strcpy(temp_cas_mer2, temp_cas_mer); //skopiruje prvy string
 
     for(int i=1; i<file_len; i++)
@@ -621,21 +627,20 @@ void r(char **cas_mer, int file_len)
         }
     }
 
-    //Print hours and all of their minutes in the same line
+    //vypise hodiny a ich dane minuty do jedneho riadku
     for(int i=0; i<index_new; i++)
     {
-        char hourStr[3]={temp_cas_mer2[i*5], temp_cas_mer2[i*5+1], '\0'};
-        int hour=atoi(hourStr);
-        char minutsStr[3]={temp_cas_mer2[i*5+2], temp_cas_mer2[i*5+3], '\0'};
+        char hod_str[3]={temp_cas_mer2[i*5], temp_cas_mer2[i*5+1], '\0'};
+        char min_str[3]={temp_cas_mer2[i*5+2], temp_cas_mer2[i*5+3], '\0'};
 
-        //If the hour is the same as the previous one, print the minuts
+        //ak je hodina rovnaka ako predtym tak vypisuje iba minuty
         if(i!=0 && temp_cas_mer2[i*5]==temp_cas_mer2[(i-1)*5] && temp_cas_mer2[i*5+1]==temp_cas_mer2[(i-1)*5+1])
         {
-            printf(", %s", minutsStr);
+            printf(", %s", min_str);
         }
         else
         {
-            printf("\n%s:%s", hourStr, minutsStr);
+            printf("\n%s:%s", hod_str, min_str);
         }
     }
 
@@ -646,7 +651,7 @@ void r(char **cas_mer, int file_len)
     temp_cas_mer2=NULL;
 }
 
-void z(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len, FILE **f)
+void z(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int *file_len)
 {
     if(*id==NULL)
     {
@@ -734,7 +739,7 @@ void deAlloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, c
 /*realokuje velkosti poli vo funkcii z po zmazani zaznamov*/
 void reAlloc(long long **id, char **mer_mod, char **mer_vel, double **hodnota, char **cas_mer, long long **datum, int file_len)
 {
-    //!=NULL je tam kvoli tomu ze mi kompiler daval warningy ze nepouzivam return hodnotu reallocu, tak som dal aby akoze overil ze to spravne reallocoval
+    //!=NULL je tam kvoli tomu ze mi kompiler daval warningy ze nepouzivam return hodnotu reallocu, tak som dal aby akoze overil ze to spravne reallocoval ale realne ten bool vystup nepouzijem
     realloc(*id, file_len*sizeof(long long))!=NULL;
     realloc(*mer_mod, file_len*4*sizeof(char))!=NULL;
     realloc(*mer_vel, file_len*3*sizeof(char))!=NULL;
