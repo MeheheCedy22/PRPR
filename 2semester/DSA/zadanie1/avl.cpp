@@ -2,7 +2,9 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
-#include <windows.h>
+
+#include <chrono>
+using namespace std::chrono;
 
 using std::cout;
 using std::endl;
@@ -107,14 +109,22 @@ class AVL
         Node* insert(Node* node, int value)
         {
             if (node == nullptr)
+            {
                 return new Node(value);
+            }
 
             if (value < node->value)
+            {
                 node->left = insert(node->left, value);
+            }
             else if (value > node->value)
+            {
                 node->right = insert(node->right, value);
-            else
+            }
+//            else
+//            {
                 return node;
+//            }
         }
 
 /*_______________________________________OK________________________________________________________*/
@@ -251,12 +261,17 @@ int main()
     
     for (int x = 0; x<I ;x++) //loop generate I random numbers
 	{
-		input_array[x]=1+(rand()%1000001); // interval from 1 to 50, there are 51 numbers in the range
-        cout<<"["<<x<<"]: "<<input_array[x]<<endl;
+		input_array[x]=1+(rand()%1000001); // interval from 1 to 1,000,000 , there are 51 numbers in the range
+        //cout<<"["<<x<<"]: "<<input_array[x]<<endl;
 	}
 
     cout<<endl<<endl;
     
+
+
+
+    auto start = high_resolution_clock::now();
+
     
     AVL tree;
     int k;
@@ -266,10 +281,22 @@ int main()
         tree.root = tree.insert(tree.root, input_array[i]);
     }
 
+
+
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    cout << "Time taken by function: "<< duration.count() << " microseconds" << endl;
+
+
+/*
     cout << "Tree: "<<endl;
     tree.print("", tree.root, false);
     //tree.print(tree.root);
     cout << endl << endl;
+
+
+    cout << "Time taken by function: "<< duration.count() << " microseconds" << endl;
+
 
     cout << "Search for number on \"k\" index: ";
     
@@ -289,6 +316,7 @@ int main()
     tree.print("", tree.root, false);
     //tree.print(tree.root);
     cout << endl;
+*/
 
     return 0;
 }
