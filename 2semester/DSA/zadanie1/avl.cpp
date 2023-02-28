@@ -1,3 +1,4 @@
+/*linux version*/
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -27,6 +28,11 @@ class Node
             this->left = nullptr;
             this->right = nullptr;
         }
+        ~Node() /*destructor*/
+        {
+            delete left;
+            delete right;
+        }
 };
 
 //define class AVL tree
@@ -37,6 +43,11 @@ class AVL
         AVL() /* constructor */
         {
             root = nullptr;
+        }
+
+        ~AVL() /* destructor */
+        {
+            delete root;
         }
 
         //function to check if the tree is empty
@@ -261,8 +272,8 @@ int main()
     
     for (int x = 0; x<I ;x++) //loop generate I random numbers
 	{
-		input_array[x]=1+(rand()%1000001); // interval from 1 to 1,000,000 , there are 51 numbers in the range
-        //cout<<"["<<x<<"]: "<<input_array[x]<<endl;
+		input_array[x]=1+(rand()%51); // interval from 1 to 1,000,000 , there are 51 numbers in the range
+        cout<<"["<<x<<"]: "<<input_array[x]<<endl;
 	}
 
     cout<<endl<<endl;
@@ -273,12 +284,12 @@ int main()
     auto start = high_resolution_clock::now();
 
     
-    AVL tree;
+    AVL* tree=new AVL;
     int k;
     
     for (int i = 0; i < I; i++)
     {
-        tree.root = tree.insert(tree.root, input_array[i]);
+        tree->root = tree->insert(tree->root, input_array[i]);
     }
 
 
@@ -287,11 +298,13 @@ int main()
     auto duration = duration_cast<microseconds>(stop - start);
     cout << "Time taken by function: "<< duration.count() << " microseconds" << endl;
 
+    
 
-/*
+
+
     cout << "Tree: "<<endl;
-    tree.print("", tree.root, false);
-    //tree.print(tree.root);
+    tree->print("", tree->root, false);
+    //tree->print(tree->root);
     cout << endl << endl;
 
 
@@ -304,19 +317,20 @@ int main()
     getchar();
     cout<<"number on k index="<<input_array[k]<<endl;
 
-    if (tree.search(tree.root, input_array[k]) != nullptr)
+    if (tree->search(tree->root, input_array[k]) != nullptr)
         cout << "Found" << endl;
     else
         cout << "Not Found" << endl;
 
     cout << "Delete number on k index" << endl;
-    tree.root = tree.deleteNode(tree.root, input_array[k]);
+    tree->root = tree->deleteNode(tree->root, input_array[k]);
 
     cout << "Tree: "<<endl;
-    tree.print("", tree.root, false);
-    //tree.print(tree.root);
+    tree->print("", tree->root, false);
+    //tree->print(tree->root);
     cout << endl;
-*/
+
+    delete tree;
 
     return 0;
 }
